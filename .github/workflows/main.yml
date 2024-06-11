@@ -1,0 +1,23 @@
+name: Xero SDK Publish
+
+on:
+  push:
+    tags:
+    - 'xero-*'
+
+jobs:
+  build:
+    runs-on: windows-2022
+    name: build and publish
+    steps:
+    - name: Support longpaths
+      run: git config --system core.longpaths true
+    - uses: actions/checkout@v2
+    - name: Add nuget package source
+      run: dotnet nuget add source --username sipsorcery --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github-nofrixion "https://nuget.pkg.github.com/nofrixion/index.json"
+    - name: Install dependencies
+      run: dotnet restore Xero-NetStandard\Xero.NetStandard.OAuth2.sln
+    - name: Build
+      run: dotnet build Xero-NetStandard\Xero.NetStandard.OAuth2.sln -c Release --no-restore
+    - name: Publish
+      run: dotnet nuget push **\*.nupkg --source https://nuget.pkg.github.com/nofrixion/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
